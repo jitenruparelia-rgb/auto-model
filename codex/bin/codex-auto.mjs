@@ -61,7 +61,10 @@ export function plan(argv, config) {
   const args = [...p.args]
   args[p.promptIndex] = d.text // @fast / @mid / @max prefix stripped
   const model = config.models[d.tier]
-  return { ...p, args: ['-m', model, ...args], tier: d.tier, model, reason: d.reason }
+  // `codex exec -m <model> ...` is the documented form: put -m after the subcommand.
+  const at = SUBCOMMANDS.has(args[0]) ? 1 : 0
+  args.splice(at, 0, '-m', model)
+  return { ...p, args, tier: d.tier, model, reason: d.reason }
 }
 
 function main() {

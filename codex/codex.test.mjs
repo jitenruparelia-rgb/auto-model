@@ -13,8 +13,7 @@ test('simple question gets the small model', () => {
 test('exec keeps the subcommand and routes its prompt', () => {
   const r = plan(['exec', '--full-auto', 'add a loading spinner to the login button and update the styles accordingly'], config)
   assert.equal(r.model, 'gpt-6.1-sol')
-  assert.equal(r.args[0], '-m')
-  assert.equal(r.args[2], 'exec')
+  assert.deepEqual(r.args.slice(0, 3), ['exec', '-m', 'gpt-6.1-sol'])
 })
 test('flag values are not mistaken for the prompt', () => {
   const p = parseArgs(['-C', '/tmp/x', 'exec', 'hello there'])
