@@ -19,7 +19,8 @@ const HARD =
 const EASY =
   /^(what|who|when|where|why|how (do|does|to)|explain|define|summari[sz]e|translate|rename|fix (the )?typo|list|show|tell me|is |are |can you (tell|show|explain))\b/i
 const FOLLOW_UP = /^(yes|yep|yeah|no|ok(ay)?|sure|thanks?|thank you|go( ahead| on)?|continue|do it|proceed|lgtm|looks good|y|n)\b[\s.!]*$/i
-const OVERRIDE = /^@(haiku|sonnet|opus)\b\s*/i
+const ALIASES: Record<string, Tier> = { haiku: 'haiku', sonnet: 'sonnet', opus: 'opus', fast: 'haiku', mid: 'sonnet', max: 'opus' }
+const OVERRIDE = /^@(haiku|sonnet|opus|fast|mid|max)\b\s*/i
 const CODE_FENCE = /```/
 
 /** Cheap local heuristic: no tokens spent deciding. */
@@ -45,7 +46,10 @@ const clamp = (t: Tier, s: Settings): Tier =>
  */
 export function decide(text: string, s: Settings, current: Tier | null): Decision {
   const m = OVERRIDE.exec(text)
-  if (m) return { tier: m[1]!.toLowerCase() as Tier, reason: `@${m[1]!.toLowerCase()} override`, text: text.slice(m[0].length) }
+  if (m) {
+    const name = m[1]!.toLowerCase()
+    return { tier: ALIASES[name]!, reason: `@${name} override`, text: text.slice(m[0].length) }
+  }
   if (s.pin) return { tier: s.pin, reason: 'pinned', text }
   if (current && FOLLOW_UP.test(text.trim()))
     return { tier: clamp(current, s), reason: 'follow-up, keeping model', text }

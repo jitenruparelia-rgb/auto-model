@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /ABSOLUTE/PATH/TO/auto-model/codex/hooks/user-prompt-submit.mjs",
+            "timeout": 10,
+            "statusMessage": "auto-model"
+          }
+        ]
+      }
+    ]
+  }
+}

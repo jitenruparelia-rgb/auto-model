@@ -1,0 +1,11 @@
+{
+  "name": "auto-model",
+  "version": "0.3.0",
+  "description": "Auto-pick the smallest model that fits each prompt, for Claude Code and Codex",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "codex-auto": "codex/bin/codex-auto.mjs" },
+  "engines": { "node": ">=22.18" },
+  "scripts": { "test": "node --test codex/codex.test.mjs" },
+  "repository": { "type": "git", "url": "git+https://github.com/jitenruparelia-rgb/auto-model.git" }
+}
