@@ -38,8 +38,8 @@ Settings and stats persist across sessions.
 ## Install
 
 ```
-/plugin marketplace add <owner>/auto-model
-/plugin install auto-model --marketplace <owner>/auto-model
+/plugin marketplace add jitenruparelia-rgb/auto-model
+/plugin install auto-model --marketplace jitenruparelia-rgb/auto-model
 ```
 
 Or for development: `claude --plugin-dir /path/to/auto-model`.
