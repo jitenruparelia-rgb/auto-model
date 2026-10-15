@@ -18,12 +18,27 @@ const HELP = `Auto Model: picks haiku / sonnet / opus per prompt.
   /automodel pin <tier>   always use haiku|sonnet|opus   (/automodel unpin)
   /automodel floor <tier> never go below this tier
   /automodel max <tier>   never go above this tier
+  /automodel debug        show the model row and last switch error
   /automodel reset        clear settings and stats
 Prefix a prompt with @haiku, @sonnet or @opus to force one for that prompt.`
 
 export const register: Register = on => {
   const load = async ($: any): Promise<Settings> => ({ ...DEFAULTS, ...((await $.store.get('settings')) as object | undefined) })
   const save = ($: any, s: Settings) => $.store.set('settings', s)
+
+  /** The /config row that holds the model, with the value it takes for a tier. */
+  const modelRow = async ($: any) => {
+    const rows = (await $.config.list()) as { key: string; label: string; kind: string; value: unknown; options?: string[]; isLocked: boolean }[]
+    return rows.find(r => r.key === 'model') ?? rows.find(r => /model/i.test(r.key) && !/fast|effort/i.test(r.key))
+  }
+  const switchTo = async ($: any, tier: Tier): Promise<string | null> => {
+    const row = await modelRow($)
+    if (!row) return 'no model row in /config'
+    if (row.isLocked) return 'model is locked by policy'
+    const value = row.options?.find(o => o.toLowerCase().includes(tier)) ?? tier
+    const r = await $.config.set({ key: row.key, value })
+    return r.deny === undefined ? null : String(r.deny)
+  }
 
   on('session.start', async ($, e, next) => {
     await $.command.register({
@@ -86,6 +101,14 @@ export const register: Register = on => {
           `Routed ${total} prompts: haiku ${st.haiku} (${pct(st.haiku)}%), sonnet ${st.sonnet} (${pct(st.sonnet)}%), opus ${st.opus} (${pct(st.opus)}%) · ${st.switches} model switches`,
         )
       }
+      case 'debug': {
+        const rows = ((await $.config.list()) as any[]).filter(r => /model/i.test(r.key + r.label))
+        const cur = await $.session.model()
+        return say(
+          `session model: ${cur} (tier ${tierOf(cur) ?? 'none'})\nlast switch error: ${(await $.store.get('lastError')) ?? 'none'}\nmodel rows: ` +
+            (rows.length ? rows.map(r => `${r.key} [${r.kind}] = ${JSON.stringify(r.value)} options=${JSON.stringify(r.options ?? null)} locked=${r.isLocked}`).join('; ') : 'none found'),
+        )
+      }
       case 'reset':
         await $.store.delete('settings')
         await $.store.delete('stats')
@@ -119,9 +142,12 @@ export const register: Register = on => {
 
     let switched = false
     if (target !== current) {
-      const r = await $.config.set({ key: 'model', value: target })
-      switched = r.deny === undefined
-      if (!switched) $.ui.status(`auto-model: could not switch (${r.deny.slice(0, 60)})`)
+      const err = await switchTo($, target).catch((x: unknown) => `error: ${String(x)}`)
+      switched = err === null
+      if (!switched) {
+        $.ui.status(`auto-model: could not switch to ${target} (${err.slice(0, 60)})`)
+        await $.store.set('lastError', err)
+      }
     }
     if (target === current || switched) $.ui.status(`auto-model: ${target}${switched ? ' ↻' : ''}`)
 
