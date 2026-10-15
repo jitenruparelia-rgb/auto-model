@@ -1,0 +1,7 @@
+{
+  "name": "auto-model",
+  "owner": { "name": "Jiten Ruparelia" },
+  "plugins": [
+    { "name": "auto-model", "source": "./", "description": "Switches Claude to the smallest model that can handle each prompt." }
+  ]
+}
